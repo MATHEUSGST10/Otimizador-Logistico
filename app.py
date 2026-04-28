@@ -38,10 +38,18 @@ if not cursor.fetchone():
 # =========================
 
 def tela_login():
+
+    # 🔥 CORREÇÃO: inicializa antes dos inputs
+    if "email" not in st.session_state:
+        st.session_state["email"] = ""
+
+    if "senha" not in st.session_state:
+        st.session_state["senha"] = ""
+
     st.title("🔐 Login")
 
-    email = st.text_input("Email")
-    senha = st.text_input("Senha", type="password")
+    email = st.text_input("Email", key="email")
+    senha = st.text_input("Senha", type="password", key="senha")
 
     if st.button("Entrar"):
         cursor.execute("SELECT * FROM usuarios WHERE email=? AND senha=?", (email, senha))
@@ -51,6 +59,11 @@ def tela_login():
             st.session_state["logado"] = True
             st.session_state["empresa"] = user[2]
             st.session_state["tipo"] = user[3]
+
+            # 🔥 CORREÇÃO: remove ao invés de sobrescrever
+            st.session_state.pop("email", None)
+            st.session_state.pop("senha", None)
+
             st.rerun()
         else:
             st.error("Login inválido")
@@ -215,10 +228,7 @@ if st.button("🚀 Otimizar"):
             }
 
     cargas["decisao_final"] = "TERCEIRO"
-
-    # 🔥 ADIÇÃO SEGURA
     cargas["economia"] = 0.0
-
     total_viagens_frota = 0
 
     for dia in [0,1,2]:
@@ -277,20 +287,15 @@ if st.button("🚀 Otimizar"):
             "decisao_final"
         ] = "FROTA"
 
-    # 🔥 CALCULO ECONOMIA (SEGURO)
+    # ECONOMIA CORRIGIDA
     for i in range(len(cargas)):
         rota = cargas.iloc[i]["id_rota"]
-
         if rota in fretes:
             econ = fretes[rota]["terceiro"] - fretes[rota]["frota"]
-
             if cargas.iloc[i]["decisao_final"] == "FROTA":
                 cargas.at[i, "economia"] = float(econ)
 
-    # =========================
     # KPIs
-    # =========================
-
     total = len(cargas)
     terceiro = (cargas["decisao_final"] == "TERCEIRO").sum()
 
@@ -299,10 +304,7 @@ if st.button("🚀 Otimizar"):
     col2.metric("🚛 Frota utilizada", f"{total_viagens_frota} caminhões")
     col3.metric("📉 Cargas em terceiro", terceiro)
 
-    # =========================
     # GRÁFICOS
-    # =========================
-
     colg1, colg2 = st.columns(2)
 
     with colg1:
@@ -330,10 +332,6 @@ if st.button("🚀 Otimizar"):
         )
 
         st.plotly_chart(fig2, use_container_width=True)
-
-    # =========================
-    # RESULTADO
-    # =========================
 
     cargas["data_coleta"] = cargas["data_coleta"].dt.strftime("%d/%m/%Y")
 
