@@ -215,6 +215,10 @@ if st.button("🚀 Otimizar"):
             }
 
     cargas["decisao_final"] = "TERCEIRO"
+
+    # 🔥 ADIÇÃO SEGURA
+    cargas["economia"] = 0.0
+
     total_viagens_frota = 0
 
     for dia in [0,1,2]:
@@ -272,6 +276,16 @@ if st.button("🚀 Otimizar"):
             (cargas["id_rota"].isin(escolhidas)),
             "decisao_final"
         ] = "FROTA"
+
+    # 🔥 CALCULO ECONOMIA (SEGURO)
+    for i in range(len(cargas)):
+        rota = cargas.iloc[i]["id_rota"]
+
+        if rota in fretes:
+            econ = fretes[rota]["terceiro"] - fretes[rota]["frota"]
+
+            if cargas.iloc[i]["decisao_final"] == "FROTA":
+                cargas.at[i, "economia"] = float(econ)
 
     # =========================
     # KPIs
