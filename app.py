@@ -39,7 +39,6 @@ if not cursor.fetchone():
 
 def tela_login():
 
-    # 🔥 CORREÇÃO: inicializa antes dos inputs
     if "email" not in st.session_state:
         st.session_state["email"] = ""
 
@@ -60,7 +59,6 @@ def tela_login():
             st.session_state["empresa"] = user[2]
             st.session_state["tipo"] = user[3]
 
-            # 🔥 CORREÇÃO: remove ao invés de sobrescrever
             st.session_state.pop("email", None)
             st.session_state.pop("senha", None)
 
@@ -105,6 +103,18 @@ def reset_otimizacao():
 # =========================
 
 st.set_page_config(layout="wide")
+
+# 🔥 VISUAL MELHORADO
+st.markdown("""
+<style>
+div[data-testid="metric-container"] {
+    background-color: #111827;
+    border: 1px solid #1f2937;
+    padding: 15px;
+    border-radius: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 colA, colB, colC = st.columns([6,2,2])
 
@@ -287,7 +297,6 @@ if st.button("🚀 Otimizar"):
             "decisao_final"
         ] = "FROTA"
 
-    # ECONOMIA CORRIGIDA
     for i in range(len(cargas)):
         rota = cargas.iloc[i]["id_rota"]
         if rota in fretes:
@@ -295,23 +304,33 @@ if st.button("🚀 Otimizar"):
             if cargas.iloc[i]["decisao_final"] == "FROTA":
                 cargas.at[i, "economia"] = float(econ)
 
-    # KPIs
+    # =========================
+    # KPIs MELHORADOS
+    # =========================
+
     total = len(cargas)
     terceiro = (cargas["decisao_final"] == "TERCEIRO").sum()
+    economia_total = cargas["economia"].sum()
 
-    col1,col2,col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
+
     col1.metric("📦 Total de cargas", total)
-    col2.metric("🚛 Frota utilizada", f"{total_viagens_frota} caminhões")
+    col2.metric("🚛 Frota utilizada", total_viagens_frota)
     col3.metric("📉 Cargas em terceiro", terceiro)
+    col4.metric("💰 Economia total", f"R$ {economia_total:,.2f}")
 
+    # =========================
     # GRÁFICOS
+    # =========================
+
     colg1, colg2 = st.columns(2)
 
     with colg1:
         fig1 = px.pie(
             names=["FROTA", "TERCEIRO"],
             values=[total_viagens_frota, terceiro],
-            title="Frota vs Terceiro"
+            title="Distribuição de Transporte",
+            hole=0.4
         )
         st.plotly_chart(fig1, use_container_width=True)
 
@@ -333,6 +352,7 @@ if st.button("🚀 Otimizar"):
 
         st.plotly_chart(fig2, use_container_width=True)
 
+    # RESULTADO
     cargas["data_coleta"] = cargas["data_coleta"].dt.strftime("%d/%m/%Y")
 
     st.success("✅ Otimização concluída!")
